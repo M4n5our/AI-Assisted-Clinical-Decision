@@ -127,7 +127,11 @@ function App() {
         fetchHistory();
       }
     } catch (err) {
-      setError(err.message || 'Failed to connect to backend');
+      if (err.message === 'Failed to fetch') {
+        setError('Cannot connect to backend. Make sure the Spring Boot server is running on port 8080.');
+      } else {
+        setError(err.message || 'Failed to connect to backend');
+      }
     } finally {
       setLoading(false);
     }
@@ -142,16 +146,22 @@ function App() {
 
   const fetchHistory = async () => {
     setHistoryLoading(true);
+    setError('');
     try {
       const response = await fetch(`${API_URL}/api/history`);
       if (!response.ok) {
-        throw new Error('Failed to load history');
+        const text = await response.text();
+        throw new Error(text || `Server error: ${response.status}`);
       }
       const data = await response.json();
       setHistory(data);
       setShowHistory(true);
     } catch (err) {
-      setError(err.message || 'Failed to load history');
+      if (err.message === 'Failed to fetch') {
+        setError('Cannot connect to backend. Make sure the Spring Boot server is running on port 8080.');
+      } else {
+        setError(err.message || 'Failed to load history');
+      }
     } finally {
       setHistoryLoading(false);
     }

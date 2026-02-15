@@ -16,7 +16,7 @@ MySQL Database (port 3306)
 
 ## Prerequisites
 
-- **Java 17** and **Maven 3.8+**
+- **Java 17** (Gradle wrapper included)
 - **Python 3.10+**
 - **Node.js 18+** and **npm**
 - **MySQL 8** (or use the H2 in-memory profile for quick testing)
@@ -53,10 +53,10 @@ Verify: `curl http://localhost:8000/health` should return `{"status":"ok"}`.
 cd backend
 
 # With MySQL:
-./mvnw spring-boot:run
+./gradlew bootRun
 
 # With H2 (no MySQL needed):
-./mvnw spring-boot:run -Dspring-boot.run.profiles=h2
+./gradlew bootRun --args='--spring.profiles.active=h2'
 ```
 
 Verify: `curl http://localhost:8080/api/health` should return `Backend is running`.
@@ -103,7 +103,7 @@ curl -X POST http://localhost:8000/predict \
 │   ├── main.py
 │   └── requirements.txt
 ├── backend/                # Spring Boot — REST API, JPA, MySQL
-│   ├── pom.xml
+│   ├── build.gradle
 │   └── src/main/java/com/cdss/
 │       ├── CdssApplication.java
 │       ├── config/WebConfig.java

@@ -1,7 +1,7 @@
-# Java / Maven
-backend/target/
+# Java / Gradle
+backend/build/
+backend/.gradle/
 *.class
-*.jar
 *.war
 *.log
 

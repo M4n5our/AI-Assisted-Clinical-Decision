@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -59,5 +60,9 @@ public class CdssService {
         suggestion.setExplanation(prediction.getExplanation());
 
         return suggestionRepository.save(suggestion);
+    }
+
+    public List<Suggestion> getHistory() {
+        return suggestionRepository.findAllByOrderByCreatedAtDesc();
     }
 }

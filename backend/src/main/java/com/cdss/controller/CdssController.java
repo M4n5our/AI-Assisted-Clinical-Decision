@@ -7,6 +7,8 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api")
 public class CdssController {
@@ -21,6 +23,12 @@ public class CdssController {
     public ResponseEntity<Suggestion> generate(@Valid @RequestBody PatientRequest request) {
         Suggestion suggestion = cdssService.generateSuggestion(request);
         return ResponseEntity.ok(suggestion);
+    }
+
+    @GetMapping("/history")
+    public ResponseEntity<List<Suggestion>> history() {
+        List<Suggestion> suggestions = cdssService.getHistory();
+        return ResponseEntity.ok(suggestions);
     }
 
     @GetMapping("/health")

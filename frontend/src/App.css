@@ -22,6 +22,11 @@ body {
   text-align: center;
   padding: 30px 0 20px;
 }
+.header-icon {
+  font-size: 2.5rem;
+  margin-bottom: 8px;
+  color: #2b6cb0;
+}
 .header h1 {
   font-size: 1.8rem;
   color: #2b6cb0;
@@ -98,8 +103,25 @@ body {
   background: #e2e8f0;
   color: #4a5568;
 }
-.btn-secondary:hover {
+.btn-secondary:hover:not(:disabled) {
   background: #cbd5e0;
+}
+.btn-full {
+  width: 100%;
+}
+
+/* Field-level validation errors */
+.field-error {
+  display: block;
+  color: #c53030;
+  font-size: 0.8rem;
+  margin-top: 4px;
+}
+.input-error {
+  border-color: #fc8181 !important;
+}
+.input-error:focus {
+  box-shadow: 0 0 0 3px rgba(245, 101, 101, 0.15) !important;
 }
 
 /* Error */
@@ -148,6 +170,44 @@ body {
   font-size: 1.05rem;
 }
 
+/* Risk score display */
+.risk-score-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 4px;
+}
+.risk-score-number {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #2d3748;
+}
+
+/* Risk bar */
+.risk-bar-container {
+  width: 100%;
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+.risk-bar {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease-out;
+}
+.risk-bar-low {
+  background: #48bb78;
+}
+.risk-bar-moderate {
+  background: #ecc94b;
+}
+.risk-bar-high {
+  background: #f56565;
+}
+
 /* Risk badges */
 .risk-badge {
   padding: 4px 14px;
@@ -166,6 +226,57 @@ body {
 .risk-high {
   background: #fed7d7;
   color: #9b2c2c;
+}
+
+/* History section */
+.history-section {
+  margin-top: 24px;
+}
+.history-list {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.history-empty {
+  text-align: center;
+  color: #a0aec0;
+  padding: 20px;
+}
+.history-card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.history-date {
+  font-size: 0.8rem;
+  color: #a0aec0;
+}
+.history-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 0.85rem;
+  color: #4a5568;
+  margin-bottom: 8px;
+}
+.history-score {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #2d3748;
+  margin-bottom: 6px;
+}
+.history-explanation {
+  font-size: 0.85rem;
+  color: #718096;
+  line-height: 1.4;
 }
 
 /* Footer */

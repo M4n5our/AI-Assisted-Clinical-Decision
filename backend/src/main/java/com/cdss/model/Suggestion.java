@@ -2,43 +2,38 @@ package com.cdss.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
-@Table(name = "suggestion", indexes = {
-    @Index(name = "idx_created_at", columnList = "created_at"),
-    @Index(name = "idx_risk_level", columnList = "risk_level")
-})
+@Table(name = "suggestions")
 public class Suggestion {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private int age;
-
-    @Column(name = "systolic_bp", nullable = false)
-    private int systolicBp;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "encounter_id", nullable = false)
+    private Encounter encounter;
 
     @Column(nullable = false)
-    private int cholesterol;
-
-    @Column(nullable = false)
-    private int glucose;
-
-    @Column(nullable = false)
-    private double bmi;
-
-    @Column(name = "risk_score", nullable = false)
     private double riskScore;
 
-    @Column(name = "risk_level", nullable = false, length = 50)
+    @Column(nullable = false, length = 20)
     private String riskLevel;
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String explanation;
 
-    @Column(name = "created_at", updatable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "template_id")
+    private Template template;
+
+    @OneToMany(mappedBy = "suggestion", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Feedback> feedbacks = new ArrayList<>();
+
+    @Column(updatable = false)
     private LocalDateTime createdAt;
 
     @PrePersist
@@ -48,25 +43,11 @@ public class Suggestion {
 
     public Suggestion() {}
 
-    // Getters and setters
-
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
-    public int getAge() { return age; }
-    public void setAge(int age) { this.age = age; }
-
-    public int getSystolicBp() { return systolicBp; }
-    public void setSystolicBp(int systolicBp) { this.systolicBp = systolicBp; }
-
-    public int getCholesterol() { return cholesterol; }
-    public void setCholesterol(int cholesterol) { this.cholesterol = cholesterol; }
-
-    public int getGlucose() { return glucose; }
-    public void setGlucose(int glucose) { this.glucose = glucose; }
-
-    public double getBmi() { return bmi; }
-    public void setBmi(double bmi) { this.bmi = bmi; }
+    public Encounter getEncounter() { return encounter; }
+    public void setEncounter(Encounter encounter) { this.encounter = encounter; }
 
     public double getRiskScore() { return riskScore; }
     public void setRiskScore(double riskScore) { this.riskScore = riskScore; }
@@ -76,6 +57,12 @@ public class Suggestion {
 
     public String getExplanation() { return explanation; }
     public void setExplanation(String explanation) { this.explanation = explanation; }
+
+    public Template getTemplate() { return template; }
+    public void setTemplate(Template template) { this.template = template; }
+
+    public List<Feedback> getFeedbacks() { return feedbacks; }
+    public void setFeedbacks(List<Feedback> feedbacks) { this.feedbacks = feedbacks; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

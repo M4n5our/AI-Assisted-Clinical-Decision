@@ -1,0 +1,13 @@
+package com.cdss.repository;
+
+import com.cdss.model.Encounter;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface EncounterRepository extends JpaRepository<Encounter, Long> {
+    List<Encounter> findByPatientIdOrderByCreatedAtDesc(Long patientId);
+    List<Encounter> findByUserIdOrderByCreatedAtDesc(Long userId);
+}

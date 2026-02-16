@@ -1,112 +1,123 @@
 package com.cdss.service;
 
-import com.cdss.dto.PatientRequest;
-import com.cdss.dto.PredictionResponse;
-import com.cdss.model.Suggestion;
-import com.cdss.repository.SuggestionRepository;
+import com.cdss.dto.AuthResponse;
+import com.cdss.dto.LoginRequest;
+import com.cdss.dto.RegisterRequest;
+import com.cdss.model.User;
+import com.cdss.repository.UserRepository;
+import com.cdss.security.JwtUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class CdssServiceTest {
+class AuthServiceTest {
 
     @Mock
-    private SuggestionRepository suggestionRepository;
+    private UserRepository userRepository;
 
     @Mock
-    private RestTemplate restTemplate;
+    private PasswordEncoder passwordEncoder;
 
-    private CdssService cdssService;
+    @Mock
+    private JwtUtil jwtUtil;
+
+    private AuthService authService;
 
     @BeforeEach
     void setUp() {
-        cdssService = new CdssService(
-                suggestionRepository,
-                restTemplate,
-                "http://localhost:8000"
-        );
+        authService = new AuthService(userRepository, passwordEncoder, jwtUtil);
     }
 
     @Test
-    void generateSuggestion_shouldCallModelServiceAndSave() {
-        PatientRequest request = new PatientRequest();
-        request.setAge(65);
-        request.setSystolicBp(150);
-        request.setCholesterol(250);
-        request.setGlucose(130);
-        request.setBmi(32.0);
+    void login_withValidCredentials_shouldReturnToken() {
+        User user = new User();
+        user.setUsername("doctor");
+        user.setPassword("encoded");
+        user.setRole(User.Role.USER);
 
-        PredictionResponse prediction = new PredictionResponse();
-        prediction.setRiskScore(1.0);
-        prediction.setRiskLevel("High");
-        prediction.setExplanation("All factors elevated");
+        when(userRepository.findByUsername("doctor")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("password", "encoded")).thenReturn(true);
+        when(jwtUtil.generateToken("doctor", "USER")).thenReturn("jwt-token");
 
-        when(restTemplate.postForObject(
-                eq("http://localhost:8000/predict"),
-                any(),
-                eq(PredictionResponse.class)
-        )).thenReturn(prediction);
+        LoginRequest request = new LoginRequest();
+        request.setUsername("doctor");
+        request.setPassword("password");
 
-        when(suggestionRepository.save(any(Suggestion.class)))
-                .thenAnswer(invocation -> {
-                    Suggestion s = invocation.getArgument(0);
-                    s.setId(1L);
-                    return s;
-                });
+        AuthResponse response = authService.login(request);
 
-        Suggestion result = cdssService.generateSuggestion(request);
-
-        assertNotNull(result);
-        assertEquals(65, result.getAge());
-        assertEquals(150, result.getSystolicBp());
-        assertEquals(1.0, result.getRiskScore());
-        assertEquals("High", result.getRiskLevel());
-        verify(restTemplate).postForObject(anyString(), any(), eq(PredictionResponse.class));
-        verify(suggestionRepository).save(any(Suggestion.class));
+        assertEquals("jwt-token", response.getToken());
+        assertEquals("doctor", response.getUsername());
+        assertEquals("USER", response.getRole());
     }
 
     @Test
-    void generateSuggestion_shouldThrowWhenModelReturnsNull() {
-        PatientRequest request = new PatientRequest();
-        request.setAge(30);
-        request.setSystolicBp(120);
-        request.setCholesterol(200);
-        request.setGlucose(90);
-        request.setBmi(22.0);
+    void login_withInvalidPassword_shouldThrow() {
+        User user = new User();
+        user.setUsername("doctor");
+        user.setPassword("encoded");
 
-        when(restTemplate.postForObject(anyString(), any(), eq(PredictionResponse.class)))
-                .thenReturn(null);
+        when(userRepository.findByUsername("doctor")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("wrong", "encoded")).thenReturn(false);
 
-        assertThrows(RuntimeException.class,
-                () -> cdssService.generateSuggestion(request));
+        LoginRequest request = new LoginRequest();
+        request.setUsername("doctor");
+        request.setPassword("wrong");
+
+        assertThrows(RuntimeException.class, () -> authService.login(request));
     }
 
     @Test
-    void getHistory_shouldReturnSuggestionsOrderedByDate() {
-        Suggestion s1 = new Suggestion();
-        s1.setId(1L);
-        s1.setRiskLevel("Low");
-        Suggestion s2 = new Suggestion();
-        s2.setId(2L);
-        s2.setRiskLevel("High");
+    void login_withInvalidUsername_shouldThrow() {
+        when(userRepository.findByUsername("unknown")).thenReturn(Optional.empty());
 
-        when(suggestionRepository.findAllByOrderByCreatedAtDesc())
-                .thenReturn(List.of(s2, s1));
+        LoginRequest request = new LoginRequest();
+        request.setUsername("unknown");
+        request.setPassword("password");
 
-        List<Suggestion> result = cdssService.getHistory();
+        assertThrows(RuntimeException.class, () -> authService.login(request));
+    }
 
-        assertEquals(2, result.size());
-        assertEquals("High", result.get(0).getRiskLevel());
-        assertEquals("Low", result.get(1).getRiskLevel());
+    @Test
+    void register_withNewUser_shouldReturnToken() {
+        when(userRepository.existsByUsername("newuser")).thenReturn(false);
+        when(userRepository.existsByEmail("new@test.com")).thenReturn(false);
+        when(passwordEncoder.encode("password")).thenReturn("encoded");
+        when(jwtUtil.generateToken("newuser", "USER")).thenReturn("jwt-token");
+        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        RegisterRequest request = new RegisterRequest();
+        request.setUsername("newuser");
+        request.setPassword("password");
+        request.setFullName("New User");
+        request.setEmail("new@test.com");
+
+        AuthResponse response = authService.register(request);
+
+        assertEquals("jwt-token", response.getToken());
+        assertEquals("newuser", response.getUsername());
+        verify(userRepository).save(any(User.class));
+    }
+
+    @Test
+    void register_withExistingUsername_shouldThrow() {
+        when(userRepository.existsByUsername("doctor")).thenReturn(true);
+
+        RegisterRequest request = new RegisterRequest();
+        request.setUsername("doctor");
+        request.setPassword("password");
+        request.setFullName("Doctor");
+        request.setEmail("doc@test.com");
+
+        assertThrows(RuntimeException.class, () -> authService.register(request));
     }
 }

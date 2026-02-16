@@ -12,8 +12,7 @@ import com.cdss.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -23,12 +22,41 @@ public class EncounterService {
     private final PatientRepository patientRepository;
     private final UserRepository userRepository;
 
+    // Valid observation types and their accepted ranges (matching model service)
+    private static final Map<String, double[]> OBSERVATION_RANGES = Map.of(
+            "age", new double[]{0, 150},
+            "systolic_bp", new double[]{50, 300},
+            "cholesterol", new double[]{50, 500},
+            "glucose", new double[]{20, 500},
+            "bmi", new double[]{10.0, 80.0}
+    );
+
     public EncounterService(EncounterRepository encounterRepository,
                             PatientRepository patientRepository,
                             UserRepository userRepository) {
         this.encounterRepository = encounterRepository;
         this.patientRepository = patientRepository;
         this.userRepository = userRepository;
+    }
+
+    private void validateObservations(List<ObservationDto> observations) {
+        if (observations == null || observations.isEmpty()) {
+            return;
+        }
+        for (ObservationDto obs : observations) {
+            String type = obs.getType().toLowerCase();
+            if (!OBSERVATION_RANGES.containsKey(type)) {
+                throw new IllegalArgumentException(
+                        "Invalid observation type: '" + obs.getType()
+                                + "'. Valid types are: " + String.join(", ", OBSERVATION_RANGES.keySet()));
+            }
+            double[] range = OBSERVATION_RANGES.get(type);
+            if (obs.getValue() < range[0] || obs.getValue() > range[1]) {
+                throw new IllegalArgumentException(
+                        "Observation '" + obs.getType() + "' value " + obs.getValue()
+                                + " is out of range. Accepted range: " + range[0] + " - " + range[1]);
+            }
+        }
     }
 
     public List<EncounterDto> getEncountersByPatient(Long patientId) {
@@ -48,6 +76,8 @@ public class EncounterService {
                 .orElseThrow(() -> new RuntimeException("Patient not found"));
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+
+        validateObservations(dto.getObservations());
 
         Encounter encounter = new Encounter();
         encounter.setPatient(patient);

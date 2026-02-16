@@ -8,5 +8,6 @@ import java.util.List;
 
 @Repository
 public interface SuggestionRepository extends JpaRepository<Suggestion, Long> {
+    List<Suggestion> findByEncounterIdOrderByCreatedAtDesc(Long encounterId);
     List<Suggestion> findAllByOrderByCreatedAtDesc();
 }
